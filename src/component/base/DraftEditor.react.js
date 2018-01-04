@@ -57,6 +57,19 @@ const handlerMap = {
   render: null,
 };
 
+const eventNameToModes = function (handlerMap) {
+  let map = {};
+  for (let mode in handlerMap) {
+    let eventNames = handlerMap[mode] ? Object.keys(handlerMap[mode]) : [];
+    for (let eventName of eventNames) {
+      if (!map[eventName])
+        map[eventName] = [];
+      map[eventName].push(mode);
+    }
+  }
+  return map;
+}(handlerMap);
+
 type State = {
   contentsKey: number,
 };
@@ -132,6 +145,7 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
     this._blockSelectEvents = false;
     this._clipboard = null;
     this._handler = null;
+    this._mode = null;
     this._dragCount = 0;
     this._editorKey = props.editorKey || generateRandomKey();
     this._placeholderAccessibilityID = 'placeholder-' + this._editorKey;
@@ -173,8 +187,22 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
   _buildHandler(eventName: string): Function {
     return e => {
       if (!this.props.readOnly) {
-        const method = this._handler && this._handler[eventName];
-        method && method(this, e);
+        const currMode = this.getMode();
+        const handler = this._handler && this._handler[eventName];
+        const customHandler = this.props['_'+eventName];
+
+        if (customHandler) {
+          const eventModes = eventNameToModes[eventName];
+          const eventMode = eventModes && eventModes.length == 1 ? eventModes[0] : null;
+          const origHandler = handler ? handler : (eventMode ? handlerMap[eventMode][eventName] : null);
+          const isCorrectModeForEvent = (eventModes && eventModes.indexOf(currMode) != -1);
+          // Tip: isCorrectModeForEvent can be false for:
+          //  'onDragOver' (for internal drag)
+
+          customHandler(e, origHandler);
+        } else if (handler) {
+          handler(this, e);
+        }
       }
     };
   }
@@ -412,7 +440,12 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
    * the active mode.
    */
   setMode = (mode: DraftEditorModes): void => {
+    this._mode = mode;
     this._handler = handlerMap[mode];
+  };
+
+  getMode = (): DraftEditorModes => {
+    return this._mode;
   };
 
   exitCurrentMode = (): void => {
