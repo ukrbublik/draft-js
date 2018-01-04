@@ -40,11 +40,17 @@ const DraftPasteProcessor = {
   processHTML(
     html: string,
     blockRenderMap?: DraftBlockRenderMap,
+    _postProcessInlineTag?: (
+      tag: string,
+      node: Node,
+      currentStyle: DraftInlineStyle,
+    ) => DraftInlineStyle
   ): ?{contentBlocks: ?Array<BlockNodeRecord>, entityMap: EntityMap} {
     return convertFromHTMLtoContentBlocks(
       html,
       getSafeBodyFromHTML,
       blockRenderMap,
+      _postProcessInlineTag,
     );
   },
 
