@@ -338,6 +338,11 @@ const genFragment = (
   blockTags: Array<string>,
   depth: number,
   blockRenderMap: DraftBlockRenderMap,
+  _postProcessInlineTag?: (
+    tag: string,
+    node: Node,
+    currentStyle: DraftInlineStyle,
+  ) => DraftInlineStyle,
   inEntity?: ?string,
   parentKey?: ?string,
 ): {chunk: Chunk, entityMap: EntityMap} => {
@@ -431,6 +436,9 @@ const genFragment = (
 
   // Inline tags
   inlineStyle = processInlineTag(nodeName, node, inlineStyle);
+  if (_postProcessInlineTag) {
+    inlineStyle = _postProcessInlineTag(nodeName, node, inlineStyle);
+  }
 
   // Handle lists
   if (nodeName === 'ul' || nodeName === 'ol') {
@@ -503,6 +511,7 @@ const genFragment = (
       blockTags,
       depth,
       blockRenderMap,
+      _postProcessInlineTag,
       entityId || inEntity,
       experimentalTreeDataSupport ? blockKey : null,
     );
@@ -538,6 +547,11 @@ const getChunkForHTML = (
   DOMBuilder: Function,
   blockRenderMap: DraftBlockRenderMap,
   entityMap: EntityMap,
+  _postProcessInlineTag?: (
+    tag: string,
+    node: Node,
+    currentStyle: DraftInlineStyle,
+  ) => DraftInlineStyle
 ): ?{chunk: Chunk, entityMap: EntityMap} => {
   html = html
     .trim()
@@ -572,6 +586,7 @@ const getChunkForHTML = (
     workingBlocks,
     -1,
     blockRenderMap,
+    _postProcessInlineTag,
   );
 
   let chunk = fragment.chunk;
@@ -723,6 +738,11 @@ const convertFromHTMLtoContentBlocks = (
   html: string,
   DOMBuilder: Function = getSafeBodyFromHTML,
   blockRenderMap?: DraftBlockRenderMap = DefaultDraftBlockRenderMap,
+  _postProcessInlineTag?: (
+    tag: string,
+    node: Node,
+    currentStyle: DraftInlineStyle,
+  ) => DraftInlineStyle
 ): ?{contentBlocks: ?Array<BlockNodeRecord>, entityMap: EntityMap} => {
   // Be ABSOLUTELY SURE that the dom builder you pass here won't execute
   // arbitrary code in whatever environment you're running this in. For an
@@ -734,6 +754,7 @@ const convertFromHTMLtoContentBlocks = (
     DOMBuilder,
     blockRenderMap,
     DraftEntity,
+    _postProcessInlineTag,
   );
 
   if (chunkData == null) {

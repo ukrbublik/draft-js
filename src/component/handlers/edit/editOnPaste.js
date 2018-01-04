@@ -154,6 +154,7 @@ function editOnPaste(editor: DraftEditor, e: SyntheticClipboardEvent<>): void {
       var htmlFragment = DraftPasteProcessor.processHTML(
         html,
         editor.props.blockRenderMap,
+        editor.props._postProcessInlineTag
       );
       if (htmlFragment) {
         const {contentBlocks, entityMap} = htmlFragment;
