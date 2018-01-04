@@ -19,7 +19,8 @@ import type DraftEditor from 'DraftEditor.react';
  * Drag behavior has begun from outside the editor element.
  */
 function editOnDragOver(editor: DraftEditor, e: SyntheticDragEvent<>): void {
-  editor._internalDrag = false;
+  //Fix issue #1454
+  //editor._internalDrag = false;
   editor.setMode('drag');
   e.preventDefault();
 }

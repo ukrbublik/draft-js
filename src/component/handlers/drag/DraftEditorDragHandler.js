@@ -25,6 +25,7 @@ const getTextContentFromFiles = require('getTextContentFromFiles');
 const getUpdatedSelectionState = require('getUpdatedSelectionState');
 const isEventHandled = require('isEventHandled');
 const nullthrows = require('nullthrows');
+const ReactDOM = require('ReactDOM');
 
 /**
  * Get a SelectionState for the supplied mouse event.
@@ -66,6 +67,7 @@ var DraftEditorDragHandler = {
    */
   onDragEnd: function(editor: DraftEditor): void {
     editor.exitCurrentMode();
+    endDrag(editor);
   },
 
   /**
@@ -110,18 +112,36 @@ var DraftEditorDragHandler = {
       editor.props.handleDrop &&
       isEventHandled(editor.props.handleDrop(dropSelection, data, dragType))
     ) {
-      return;
-    }
-
-    if (editor._internalDrag) {
+      //handled
+    } else if (editor._internalDrag) {
       editor.update(moveText(editorState, dropSelection));
-      return;
+    } else {
+      editor.update(
+        insertTextAtSelection(editorState, dropSelection, data.getText()),
+      );
     }
-
-    editor.update(
-      insertTextAtSelection(editorState, dropSelection, data.getText()),
-    );
+    endDrag(editor);
   },
+};
+
+function endDrag(editor) {
+  //Fix issue #1454
+  editor._internalDrag = false; //flush
+
+  //Fix issue #1383
+  // React's onSelect event breaks after an onDrop event
+  // has fired in a node: https://github.com/facebook/react/issues/11379.
+  // Until this is fixed in React, we dispatch a mouseup event on that
+  // DOM node, since that will make it go back to normal.
+  const editorNode = ReactDOM.findDOMNode(editor);
+  if (editorNode) {
+    const mouseUpEvent = new MouseEvent('mouseup', {
+      view: window,
+      bubbles: true,
+      cancelable: true
+    });
+    editorNode.dispatchEvent(mouseUpEvent);
+  }
 };
 
 function moveText(
