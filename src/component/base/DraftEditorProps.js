@@ -177,6 +177,21 @@ export type DraftEditorProps = {
   // an element tag and an optional react element wrapper. This configuration
   // is used for both rendering and paste processing.
   blockRenderMap: DraftBlockRenderMap,
+
+  // overrides
+  _onCopy?: (e: SyntheticClipboardEvent<>, origHandler: Function) => void,
+  _onPaste?: (e: SyntheticClipboardEvent<>, origHandler: Function) => void,
+  _onCut?: (e: SyntheticClipboardEvent<>, origHandler: Function) => void,
+  _onDragStart?: (e: SyntheticEvent<>, origHandler: Function) => void,
+  _onDragOver?: (e: SyntheticDragEvent<>, origHandler: Function) => void,
+  _onKeyDown?: (e: SyntheticKeyboardEvent<>, origHandler: Function) => void,
+  _onBeforeInput?: (e: SyntheticInputEvent<>, origHandler: Function) => void,
+  _onBlur?: (e: SyntheticEvent<>, origHandler: Function) => void,
+  _onFocus?: (e: SyntheticEvent<>, origHandler: Function) => void,
+  _onDrop?: (e: SyntheticEvent<>, origHandler: Function) => void,
+  _onDragEnd?: (e: SyntheticEvent<>, origHandler: Function) => void,
+
+
 };
 
 export type DraftEditorDefaultProps = {
