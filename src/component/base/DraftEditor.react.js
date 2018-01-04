@@ -57,18 +57,17 @@ const handlerMap = {
   render: null,
 };
 
-const eventNameToModes = function (handlerMap) {
+const eventNameToModes = (function(handlerMap) {
   let map = {};
   for (let mode in handlerMap) {
     let eventNames = handlerMap[mode] ? Object.keys(handlerMap[mode]) : [];
     for (let eventName of eventNames) {
-      if (!map[eventName])
-        map[eventName] = [];
+      if (!map[eventName]) map[eventName] = [];
       map[eventName].push(mode);
     }
   }
   return map;
-}(handlerMap);
+})(handlerMap);
 
 type State = {
   contentsKey: number,
@@ -93,6 +92,7 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
   _blockSelectEvents: boolean;
   _clipboard: ?BlockMap;
   _handler: ?Object;
+  _mode: ?DraftEditorModes;
   _dragCount: number;
   _internalDrag: boolean;
   _editorKey: string;
@@ -189,15 +189,21 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
       if (!this.props.readOnly) {
         const currMode = this.getMode();
         const handler = this._handler && this._handler[eventName];
-        const customHandler = this.props['_'+eventName];
+        const customHandler = this.props['_' + eventName];
 
         if (customHandler) {
           const eventModes = eventNameToModes[eventName];
-          const eventMode = eventModes && eventModes.length == 1 ? eventModes[0] : null;
-          const origHandler = handler ? handler : (eventMode ? handlerMap[eventMode][eventName] : null);
-          const isCorrectModeForEvent = (eventModes && eventModes.indexOf(currMode) != -1);
+          const eventMode =
+            eventModes && eventModes.length == 1 ? eventModes[0] : null;
+          const origHandler = handler
+            ? handler
+            : eventMode ? handlerMap[eventMode][eventName] : null;
           // Tip: isCorrectModeForEvent can be false for:
           //  'onDragOver' (for internal drag)
+          const isCorrectModeForEvent =
+            eventModes && eventModes.indexOf(currMode) != -1;
+          if (!isCorrectModeForEvent) {
+          }
 
           customHandler(e, origHandler);
         } else if (handler) {
@@ -444,7 +450,7 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
     this._handler = handlerMap[mode];
   };
 
-  getMode = (): DraftEditorModes => {
+  getMode = (): ?DraftEditorModes => {
     return this._mode;
   };
 

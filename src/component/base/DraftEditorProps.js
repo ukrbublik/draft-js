@@ -190,8 +190,6 @@ export type DraftEditorProps = {
   _onFocus?: (e: SyntheticEvent<>, origHandler: Function) => void,
   _onDrop?: (e: SyntheticEvent<>, origHandler: Function) => void,
   _onDragEnd?: (e: SyntheticEvent<>, origHandler: Function) => void,
-
-
 };
 
 export type DraftEditorDefaultProps = {
