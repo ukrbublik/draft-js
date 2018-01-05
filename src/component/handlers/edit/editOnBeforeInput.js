@@ -81,7 +81,6 @@ function editOnBeforeInput(
   editor: DraftEditor,
   e: SyntheticInputEvent<>,
 ): void {
-
   // React doesn't fire a selection event until mouseUp, so it's possible to click to change selection, hold the mouse
   // down, and type a character without React registering it. Let's sync the selection manually now.
   editOnSelect(editor);
@@ -220,10 +219,10 @@ function editOnBeforeInput(
   newEditorState = EditorState.set(newEditorState, {
     nativelyRenderedContent: newEditorState.getCurrentContent(),
   });
- 
-  editor._updatedNativeInsertionBlock = editorState.getCurrentContent().getBlockForKey(
-    editorState.getSelection().getAnchorKey()
-  );
+
+  editor._updatedNativeInsertionBlock = editorState
+    .getCurrentContent()
+    .getBlockForKey(editorState.getSelection().getAnchorKey());
 
   // Allow the native insertion to occur and update our internal state
   // to match. If editor.update() does something like changing a typed
@@ -236,7 +235,10 @@ function editOnBeforeInput(
   var contentStateAfterUpdate = editorStateAfterUpdate.getCurrentContent();
   var expectedContentStateAfterUpdate = editorStateAfterUpdate.getNativelyRenderedContent();
 
-  if (expectedContentStateAfterUpdate && expectedContentStateAfterUpdate === contentStateAfterUpdate) {
+  if (
+    expectedContentStateAfterUpdate &&
+    expectedContentStateAfterUpdate === contentStateAfterUpdate
+  ) {
     if (isIE) {
       setImmediate(() => {
         editOnInput(editor);
