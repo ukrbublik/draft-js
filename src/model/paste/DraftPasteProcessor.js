@@ -16,6 +16,7 @@
 import type {BlockNodeRecord} from 'BlockNodeRecord';
 import type {DraftBlockRenderMap} from 'DraftBlockRenderMap';
 import type {DraftBlockType} from 'DraftBlockType';
+import type {DraftInlineStyle} from 'DraftInlineStyle';
 import type {EntityMap} from 'EntityMap';
 
 const CharacterMetadata = require('CharacterMetadata');
@@ -44,7 +45,7 @@ const DraftPasteProcessor = {
       tag: string,
       node: Node,
       currentStyle: DraftInlineStyle,
-    ) => DraftInlineStyle
+    ) => DraftInlineStyle,
   ): ?{contentBlocks: ?Array<BlockNodeRecord>, entityMap: EntityMap} {
     return convertFromHTMLtoContentBlocks(
       html,

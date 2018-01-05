@@ -250,6 +250,12 @@ handleDrop?: (selection: SelectionState, dataTransfer: Object, isInternal: Draft
 ```
 Handle other drop operations.
 
+#### _postProcessInlineTag
+```
+_postProcessInlineTag?: (tag: string, node: Node, currentStyle: DraftInlineStyle) => DraftInlineStyle
+```
+Provide an function to be called when converting pasted HTML to content blocks. By default, only basic inline styles will be processed: BOLD, ITALIC, UNDERLINE, STRIKETHROUGH. To process more styles, use this method.
+
 ### Key Handlers (Optional)
 
 These prop functions expose common useful key events. Example: At Facebook, these are

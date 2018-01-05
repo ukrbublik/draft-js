@@ -551,7 +551,7 @@ const getChunkForHTML = (
     tag: string,
     node: Node,
     currentStyle: DraftInlineStyle,
-  ) => DraftInlineStyle
+  ) => DraftInlineStyle,
 ): ?{chunk: Chunk, entityMap: EntityMap} => {
   html = html
     .trim()
@@ -742,7 +742,7 @@ const convertFromHTMLtoContentBlocks = (
     tag: string,
     node: Node,
     currentStyle: DraftInlineStyle,
-  ) => DraftInlineStyle
+  ) => DraftInlineStyle,
 ): ?{contentBlocks: ?Array<BlockNodeRecord>, entityMap: EntityMap} => {
   // Be ABSOLUTELY SURE that the dom builder you pass here won't execute
   // arbitrary code in whatever environment you're running this in. For an

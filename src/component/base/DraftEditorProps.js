@@ -177,6 +177,16 @@ export type DraftEditorProps = {
   // an element tag and an optional react element wrapper. This configuration
   // is used for both rendering and paste processing.
   blockRenderMap: DraftBlockRenderMap,
+
+  // Provide an function to be called when converting pasted HTML to content
+  // blocks. By default, only basic inline styles will be processed:
+  // BOLD, ITALIC, UNDERLINE, STRIKETHROUGH. To process more styles, use this
+  // method.
+  _postProcessInlineTag?: (
+    tag: string,
+    node: Node,
+    currentStyle: DraftInlineStyle,
+  ) => DraftInlineStyle,
 };
 
 export type DraftEditorDefaultProps = {
