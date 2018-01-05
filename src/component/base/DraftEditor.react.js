@@ -503,7 +503,10 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
    * an `onChange` prop to receive state updates passed along from this
    * function.
    */
-  update = (editorState: EditorState, renderNativeContent: boolean = false): void => {
+  update = (
+    editorState: EditorState,
+    renderNativeContent: boolean = false,
+  ): void => {
     this._renderNativeContent = renderNativeContent;
     this._latestEditorState = editorState;
     this.props.onChange(editorState);

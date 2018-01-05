@@ -44,7 +44,6 @@ var DOUBLE_NEWLINE = '\n\n';
  * due to a spellcheck change, and we can incorporate it into our model.
  */
 function editOnInput(editor: DraftEditor): void {
-
   // We have already updated our internal state appropriately for this input
   // event. See editOnBeforeInput() for more info
   if (editor._updatedNativeInsertionBlock && !editor._renderNativeContent) {
@@ -60,7 +59,6 @@ function editOnInput(editor: DraftEditor): void {
   if (editor._updatedNativeInsertionBlock) {
     const oldBlock = editor._updatedNativeInsertionBlock;
     if (editorState.getSelection().getFocusKey() !== oldBlock.getKey()) {
-
       blockChangedSinceBeforeInput = true;
 
       // The selection has changed between editOnBeforeInput and now, and our
@@ -75,17 +73,14 @@ function editOnInput(editor: DraftEditor): void {
 
       var directionMap = EditorBidiService.getDirectionMap(
         contentWithOldBlock,
-        editorState.getDirectionMap()
+        editorState.getDirectionMap(),
       );
 
       editor.update(
-        EditorState.set(
-          editorState,
-          {
-            currentContent: contentWithOldBlock,
-            directionMap,
-          }
-        )
+        EditorState.set(editorState, {
+          currentContent: contentWithOldBlock,
+          directionMap,
+        }),
       );
 
       editorState = editor._latestEditorState;
@@ -193,7 +188,7 @@ function editOnInput(editor: DraftEditor): void {
     preserveEntity ? block.getEntityAt(start) : null,
   );
 
-  let contentWithAdjustedDOMSelection;
+  let contentWithAdjustedDOMSelection = newContent;
 
   if (blockChangedSinceBeforeInput) {
     // Trust window.getSelection() because that's all we have
