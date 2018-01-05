@@ -138,11 +138,11 @@ function endDrag(editor) {
     const mouseUpEvent = new MouseEvent('mouseup', {
       view: window,
       bubbles: true,
-      cancelable: true
+      cancelable: true,
     });
     editorNode.dispatchEvent(mouseUpEvent);
   }
-};
+}
 
 function moveText(
   editorState: EditorState,
