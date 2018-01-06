@@ -385,7 +385,7 @@ const genFragment = (
           (node.previousSibling &&
             node.previousSibling.nodeName === '#comment'))
       ) {
-        return {chunk: getEmptyChunk(), entityMap: entityMap};
+        return {chunk: EMPTY_CHUNK, entityMap: entityMap};
       }
       return {chunk: getWhitespaceChunk(inEntity), entityMap};
     }
