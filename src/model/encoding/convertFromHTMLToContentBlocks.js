@@ -376,6 +376,17 @@ const genFragment = (
     }
 
     if (nodeTextContent === '' && inBlock !== 'pre') {
+      // whitespace after body or html comment
+      if (
+        !inBlock &&
+        ((node.parentNode &&
+          node.parentNode.nodeName.toLowerCase() === 'body' &&
+          !node.previousSibling) ||
+          (node.previousSibling &&
+            node.previousSibling.nodeName === '#comment'))
+      ) {
+        return {chunk: EMPTY_CHUNK, entityMap: entityMap};
+      }
       return {chunk: getWhitespaceChunk(inEntity), entityMap};
     }
     if (inBlock !== 'pre') {

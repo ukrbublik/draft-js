@@ -344,3 +344,27 @@ test('must create ContentBlocks when experimentalTreeDataSupport is disabled whi
 test('must create ContentBlockNodes when experimentalTreeDataSupport is enabled while processing text', () => {
   assertDraftPasteProcessorProcessText(['Alpha', 'Beta', 'Charlie'], true);
 });
+
+test('must strip whitespace between body and its first child element', () => {
+  assertDraftPasteProcessorProcessHTML(`
+    <html><body> <p>hello</p></body></html>
+  `, CUSTOM_BLOCK_MAP);
+});
+
+test('must strip whitespace between html comment and next element', function() {
+  assertDraftPasteProcessorProcessHTML(`
+    <html><body><!--comment--> <p>hello</p></body></html>
+  `, CUSTOM_BLOCK_MAP);
+});
+
+test('must not strip whitespace inside span', function() {
+  assertDraftPasteProcessorProcessHTML(`
+    <span>hello</span><span> </span><span>world</span>
+  `, CUSTOM_BLOCK_MAP);
+});
+
+test('must strip whitespace after block dividers', function() {
+  assertDraftPasteProcessorProcessHTML(`
+    <p>hello</p> <p> what</p>
+  `, CUSTOM_BLOCK_MAP);
+});
