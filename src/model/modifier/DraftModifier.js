@@ -18,7 +18,7 @@ import type ContentState from 'ContentState';
 import type {DraftBlockType} from 'DraftBlockType';
 import type {DraftInlineStyle} from 'DraftInlineStyle';
 import type {DraftRemovalDirection} from 'DraftRemovalDirection';
-//const SelectionState = require('SelectionState');
+//import type SelectionState from 'SelectionState';
 import type {Map} from 'immutable';
 
 var CharacterMetadata = require('CharacterMetadata');
@@ -112,11 +112,30 @@ var DraftModifier = {
       'backward',
     );
 
-    return DraftModifier.replaceWithFragment(
+    let selBlockMap = contentState.getBlockMap();
+    targetRange = targetRange.updateOnDeletingSelection(
+      removalRange,
+      selBlockMap,
+    );
+
+    let afterReplaced = DraftModifier.replaceWithFragment(
       afterRemoval,
       targetRange,
       movedFragment,
     );
+
+    let selectionAfter = SelectionState.createEmpty(
+      targetRange.getStartKey(),
+    ).merge({
+      anchorKey: targetRange.getStartKey(),
+      anchorOffset: targetRange.getStartOffset(),
+      focusKey: targetRange.getStartKey(),
+      focusOffset: targetRange.getStartOffset(),
+    });
+
+    afterReplaced = afterReplaced.merge({selectionAfter: selectionAfter});
+
+    return afterReplaced;
   },
 
   replaceWithFragment: function(
