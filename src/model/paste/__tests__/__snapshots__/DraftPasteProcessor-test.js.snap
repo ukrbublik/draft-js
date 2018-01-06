@@ -1615,6 +1615,64 @@ Array [
 ]
 `;
 
+exports[`must not strip whitespace inside span 1`] = `
+Array [
+  Object {
+    "characterList": Array [
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+    ],
+    "data": Object {},
+    "depth": 0,
+    "key": "key0",
+    "text": "hello world",
+    "type": "unstyled",
+  },
+]
+`;
+
 exports[`must parse based on style attribute 1`] = `
 Array [
   Object {
@@ -2716,6 +2774,133 @@ Array [
     "key": "key0",
     "text": "hello",
     "type": "unstyled",
+  },
+]
+`;
+
+exports[`must strip whitespace after block dividers 1`] = `
+Array [
+  Object {
+    "characterList": Array [
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+    ],
+    "data": Object {},
+    "depth": 0,
+    "key": "key0",
+    "text": "hello",
+    "type": "paragraph",
+  },
+  Object {
+    "characterList": Array [
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+    ],
+    "data": Object {},
+    "depth": 0,
+    "key": "key2",
+    "text": "what",
+    "type": "paragraph",
+  },
+]
+`;
+
+exports[`must strip whitespace between body and its first child element 1`] = `
+Array [
+  Object {
+    "characterList": Array [
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+    ],
+    "data": Object {},
+    "depth": 0,
+    "key": "key0",
+    "text": "hello",
+    "type": "paragraph",
+  },
+]
+`;
+
+exports[`must strip whitespace between html comment and next element 1`] = `
+Array [
+  Object {
+    "characterList": Array [
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+      Object {
+        "entity": null,
+        "style": Array [],
+      },
+    ],
+    "data": Object {},
+    "depth": 0,
+    "key": "key0",
+    "text": "hello",
+    "type": "paragraph",
   },
 ]
 `;
