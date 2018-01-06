@@ -18,7 +18,7 @@ import type ContentState from 'ContentState';
 import type {DraftBlockType} from 'DraftBlockType';
 import type {DraftInlineStyle} from 'DraftInlineStyle';
 import type {DraftRemovalDirection} from 'DraftRemovalDirection';
-import type SelectionState from 'SelectionState';
+//import type SelectionState from 'SelectionState';
 import type {Map} from 'immutable';
 
 var CharacterMetadata = require('CharacterMetadata');
@@ -26,6 +26,7 @@ var ContentStateInlineStyle = require('ContentStateInlineStyle');
 const DraftFeatureFlags = require('DraftFeatureFlags');
 var Immutable = require('immutable');
 
+const SelectionState = require('SelectionState');
 var applyEntityToContentState = require('applyEntityToContentState');
 var getCharacterRemovalRange = require('getCharacterRemovalRange');
 var getContentStateFragment = require('getContentStateFragment');
@@ -109,11 +110,30 @@ var DraftModifier = {
       'backward',
     );
 
-    return DraftModifier.replaceWithFragment(
+    let selBlockMap = contentState.getBlockMap();
+    targetRange = targetRange.updateOnDeletingSelection(
+      removalRange,
+      selBlockMap,
+    );
+
+    let afterReplaced = DraftModifier.replaceWithFragment(
       afterRemoval,
       targetRange,
       movedFragment,
     );
+
+    let selectionAfter = SelectionState.createEmpty(
+      targetRange.getStartKey(),
+    ).merge({
+      anchorKey: targetRange.getStartKey(),
+      anchorOffset: targetRange.getStartOffset(),
+      focusKey: targetRange.getStartKey(),
+      focusOffset: targetRange.getStartOffset(),
+    });
+
+    afterReplaced = afterReplaced.merge({selectionAfter: selectionAfter});
+
+    return afterReplaced;
   },
 
   replaceWithFragment: function(
