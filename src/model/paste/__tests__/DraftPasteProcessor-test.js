@@ -344,3 +344,87 @@ test('must create ContentBlocks when experimentalTreeDataSupport is disabled whi
 test('must create ContentBlockNodes when experimentalTreeDataSupport is enabled while processing text', () => {
   assertDraftPasteProcessorProcessText(['Alpha', 'Beta', 'Charlie'], true);
 });
+
+test('must strip whitespace between body and its first child element', function() {
+  var html = '<html><body> <p>hello</p></body></html>';
+  var {contentBlocks: output} = DraftPasteProcessor.processHTML(
+    html,
+    CUSTOM_BLOCK_MAP,
+  );
+  expect(output[0].getText()).toBe('hello');
+});
+
+test('must strip whitespace between html comment and next element', function() {
+  var html = '<html><body><!--comment--> <p>hello</p></body></html>';
+  var {contentBlocks: output} = DraftPasteProcessor.processHTML(
+    html,
+    CUSTOM_BLOCK_MAP,
+  );
+  expect(output[0].getText()).toBe('hello');
+});
+
+test('must not strip whitespace inside span', function() {
+  var html = '<span>hello</span><span> </span><span>world</span>';
+  var {contentBlocks: output} = DraftPasteProcessor.processHTML(
+    html,
+    CUSTOM_BLOCK_MAP,
+  );
+  expect(output[0].getText()).toBe('hello world');
+});
+
+test('must strip whitespace after block dividers', function() {
+  var html = '<p>hello</p> <p> what</p>';
+  var {contentBlocks: output} = DraftPasteProcessor.processHTML(
+    html,
+    CUSTOM_BLOCK_MAP,
+  );
+  expect(output[1].getText()).toBe('what');
+});
+
+test('must detect when something is un-styled in a child', function() {
+  let html = '<b>hello<span style="font-weight:400;">there</span></b>';
+  let output = DraftPasteProcessor.processHTML(html, CUSTOM_BLOCK_MAP);
+  assertInlineStyles(output.contentBlocks[0], [
+    ['BOLD'],
+    ['BOLD'],
+    ['BOLD'],
+    ['BOLD'],
+    ['BOLD'],
+    [],
+    [],
+    [],
+    [],
+    [],
+  ]);
+
+  html = '<i>hello<span style="font-style:normal;">there</span></i>';
+  output = DraftPasteProcessor.processHTML(html, CUSTOM_BLOCK_MAP);
+  assertInlineStyles(output.contentBlocks[0], [
+    ['ITALIC'],
+    ['ITALIC'],
+    ['ITALIC'],
+    ['ITALIC'],
+    ['ITALIC'],
+    [],
+    [],
+    [],
+    [],
+    [],
+  ]);
+
+  // nothing to remove. make sure we don't throw an error
+  html = '<span>hello<span style="font-style:normal;">there</span></span>';
+  output = DraftPasteProcessor.processHTML(html, CUSTOM_BLOCK_MAP);
+  assertInlineStyles(output.contentBlocks[0], [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+  ]);
+});
