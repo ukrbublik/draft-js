@@ -397,8 +397,7 @@ const genFragment = (
   let chunk = {...EMPTY_CHUNK};
   let newChunk: ?Chunk = null;
   let blockKey;
-  let isUnstyledBlock = nodeName === 'div';
-  let isBlock = (blockTags.indexOf(nodeName) !== -1 || isUnstyledBlock);
+  let isBlock = (blockTags.indexOf(nodeName) !== -1 || nodeName === 'div');
   Object.assign(currParsingItem, {inBlock, inBlockType, isBlock});
 
   // Base Case
@@ -553,6 +552,7 @@ const genFragment = (
 
   while (child) {
     currParsingItem.childInd++;
+    let isChildBlock = (blockTags.indexOf(nodeName) !== -1 || nodeName === 'div');
     if (
       child instanceof HTMLAnchorElement &&
       child.href &&
@@ -606,7 +606,7 @@ const genFragment = (
     const sibling: ?Node = child.nextSibling;
 
     // Put in a newline to break up blocks inside blocks
-    if (!parentKey && sibling && isBlock && inBlock) {
+    if (!parentKey && sibling && isChildBlock && inBlock) {
       chunk = joinChunks(chunk, getSoftNewlineChunk());
     }
     if (sibling) {
