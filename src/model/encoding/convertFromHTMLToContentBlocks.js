@@ -246,11 +246,11 @@ const joinChunks = (
     A.blocks.pop();
   }
 
-  // Kill whitespace after blocks
+  // Kill newlines after blocks
   if (lastInA === '\r') {
-    if (B.text === SPACE || B.text === '\n' && !B.blocks.length) { //soft newline
+    if (B.text === '\n' && !B.blocks.length) { //soft newline
       return A;
-    } else if (firstInB === SPACE || firstInB === '\n' && !B.blocks.length) { //soft newline
+    } else if (firstInB === '\n' && !B.blocks.length) { //soft newline
       B.text = B.text.slice(1);
       B.inlines.shift();
       B.entities.shift();
@@ -405,7 +405,8 @@ const genFragment = (
   // Base Case
   if (nodeName === '#text') {
     let text = node.textContent;
-    let nodeTextContent = text.trim();
+    //trim whitespace chars except ' '
+    let nodeTextContent = text.replace(/^[\f\n\r\t\v\uFEFF\xA0]+|[\f\n\r\t\v\uFEFF\xA0]+$/g, '');
 
     // We should not create blocks for leading spaces that are
     // existing around ol/ul and their children list items
