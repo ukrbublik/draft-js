@@ -51,6 +51,15 @@ type Chunk = {
   blocks: Array<Block>,
 };
 
+type StackItem = {
+  node: Node,
+  nodeName: string,
+  childInd: number,
+  blockKey?: string,
+  isSoftNewline?: boolean,
+  isBlock?: boolean,
+};
+
 const {List, OrderedSet} = Immutable;
 
 const NBSP = '&nbsp;';
@@ -91,10 +100,10 @@ const anchorAttr = ['className', 'href', 'rel', 'target', 'title'];
 
 const imgAttr = ['alt', 'className', 'height', 'src', 'width'];
 
-let htmlInfo;
+let htmlInfo: {source?: string} = {};
 let lastBlock;
-let lastBlockStack;
-let parseStack;
+let lastBlockStack: Array<StackItem> = [];
+let parseStack: Array<StackItem> = [];
 
 const EMPTY_CHUNK = {
   text: '',
@@ -364,7 +373,7 @@ const getBlockDividerChunk = (
 };
 
 const parseStackStr = (): string => {
-  return parseStack.map((itm, ind) => {
+  return parseStack.map((itm: StackItem, ind: number) => {
     return itm.nodeName + (ind > 0 ? "["+parseStack[ind-1].childInd+"]" : "")
   }).join(" > ");
 };
@@ -386,12 +395,12 @@ const genFragment = (
   inEntity?: ?string,
   parentKey?: ?string,
 ): {chunk: Chunk, entityMap: EntityMap} => {
-  let currParsingItem = parseStack[parseStack.length-1];
+  let currParsingItem: StackItem = parseStack[parseStack.length-1];
   const lastLastBlock = lastBlock;
-  const lastLastBlockStack = lastBlockStack;
-  const lastLastStackItem = lastLastBlockStack ? lastLastBlockStack[lastLastBlockStack.length-1] : null;
-  const lastParentStackItem = lastLastBlockStack ? lastLastBlockStack[lastLastBlockStack.length-2] : null;
-  const parentStackItem = parseStack.length > 1 ? parseStack[parseStack.length-2] : null;
+  const lastLastBlockStack: Array<StackItem> = lastBlockStack;
+  const lastLastStackItem: ?StackItem = lastLastBlockStack ? lastLastBlockStack[lastLastBlockStack.length-1] : null;
+  const lastParentStackItem: ?StackItem = lastLastBlockStack ? lastLastBlockStack[lastLastBlockStack.length-2] : null;
+  const parentStackItem: ?StackItem = parseStack.length > 1 ? parseStack[parseStack.length-2] : null;
   let nodeName = node.nodeName.toLowerCase();
   let newEntityMap = entityMap;
   let nextBlockType = 'unstyled';
@@ -402,7 +411,7 @@ const genFragment = (
   let newChunk: ?Chunk = null;
   let blockKey;
   let isBlock = (blockTags.indexOf(nodeName) !== -1 || nodeName === 'div');
-  Object.assign(currParsingItem, {inBlock, inBlockType, isBlock});
+  Object.assign(currParsingItem, {isBlock});
 
   // Base Case
   if (nodeName === '#text') {
@@ -444,7 +453,8 @@ const genFragment = (
       }
 
       // special case for MSWord to prevent extra ending spaces
-      if (text === NBSP_CHAR && node.parentNode && node.parentNode.className.split(' ').indexOf('EOP') != -1) {
+      let parentElement: ?Element = node.parentElement;
+      if (text === NBSP_CHAR && node.parentElement && node.parentElement.className.split(' ').indexOf('EOP') != -1) {
         return {chunk: EMPTY_CHUNK, entityMap: entityMap};
       }
 
@@ -481,7 +491,7 @@ const genFragment = (
     if (node.className == 'Apple-interchange-newline')
       return {chunk: EMPTY_CHUNK, entityMap: entityMap}
 
-    if (lastLastStackItem 
+    if (lastLastStackItem && lastParentStackItem && parentStackItem
       && lastLastBlockStack.length == parseStack.length 
       && lastParentStackItem.node == parentStackItem.node
       && (lastLastStackItem.nodeName == 'br' ? lastLastStackItem.isSoftNewline : !lastLastStackItem.isBlock)
@@ -494,7 +504,7 @@ const genFragment = (
       };
     } else {
       //new empty block
-      currParsingItem.isNewlineBlock = true;
+      //currParsingItem.isNewlineBlock = true;
       return {
         chunk: getBlockNewlineChunk('unstyled', depth, parentKey),
         entityMap,
@@ -563,20 +573,19 @@ const genFragment = (
       lastList === 'ul' ? 'unordered-list-item' : 'ordered-list-item';
   }
 
-  Object.assign(currParsingItem, {inBlock, blockKey, newBlock});
+  Object.assign(currParsingItem, {blockKey});
 
   // Recurse through children
-  let childNodeName;
+  let childNodeName: string;
   let child: ?Node = node.firstChild;
-  if (child != null) {
-    childNodeName = child.nodeName.toLowerCase();
-  }
+  let isChildBlock;
 
   let entityId: ?string = null;
 
   while (child) {
+    childNodeName = child.nodeName.toLowerCase();
     currParsingItem.childInd++;
-    let isChildBlock = (blockTags.indexOf(childNodeName) !== -1 || childNodeName === 'div');
+    isChildBlock = childNodeName && (blockTags.indexOf(childNodeName) !== -1 || childNodeName === 'div');
     if (
       child instanceof HTMLAnchorElement &&
       child.href &&
@@ -628,17 +637,14 @@ const genFragment = (
     chunk = joinChunks(chunk, newChunk, experimentalTreeDataSupport);
     parseStack.pop();
     const sibling: ?Node = child.nextSibling;
-    const siblingNodeName = sibling ? sibling.nodeName.toLowerCase() : null;
-    const isSiblingBlock = sibling && (blockTags.indexOf(siblingNodeName) !== -1 || siblingNodeName === 'div');
+    const siblingNodeName: ?string = sibling ? sibling.nodeName.toLowerCase() : null;
+    const isSiblingBlock = siblingNodeName && (blockTags.indexOf(siblingNodeName) !== -1 || siblingNodeName === 'div');
 
     // Put in a newline to break up blocks inside blocks
     if (!parentKey && sibling && isSiblingBlock && isChildBlock && inBlock) {
       chunk = joinChunks(chunk, getSoftNewlineChunk());
     }
 
-    if (sibling) {
-      childNodeName = sibling.nodeName.toLowerCase();
-    }
     child = sibling;
   }
 
@@ -685,11 +691,11 @@ const getChunkForHTML = (
     return null;
   }
   const {body: safeBody, meta: safeMeta} = safeHtml;
-  htmlInfo = {meta: safeMeta};
+  htmlInfo = {};
   if (safeMeta.generator && /LibreOffice/.test(safeMeta.generator))
     htmlInfo.source = 'LibreOffice';
   lastBlock = null;
-  lastBlockStack = null;
+  lastBlockStack = [];
 
   // Sometimes we aren't dealing with content that contains nice semantic
   // tags. In this case, use divs to separate everything out into paragraphs

@@ -23,7 +23,7 @@ var isOldIE = UserAgent.isBrowser('IE <= 9');
 // https://developer.mozilla.org/en-US/docs/Web/API/DOMImplementation.createHTMLDocument
 // https://developer.mozilla.org/en-US/Add-ons/Code_snippets/HTML_to_DOM
 
-function getSafeBodyFromHTML(html: string): ?Element {
+function getSafeBodyFromHTML(html: string): ?{body: Element, meta: Object} {
   var doc;
   // Provides a safe context
   if (
@@ -39,12 +39,16 @@ function getSafeBodyFromHTML(html: string): ?Element {
     var meta = {};
     for (var i = 0 ; i < rawMeta.length ; i++) {
       var metaItem = rawMeta[i];
-      if (metaItem.getAttribute("charset"))
-        meta.charset = metaItem.getAttribute("charset");
-      else if (metaItem.getAttribute("property"))
-        meta[metaItem.getAttribute("property")] = metaItem.getAttribute("property");
-      else if (metaItem.getAttribute("name"))
-        meta[metaItem.getAttribute("name")] = metaItem.getAttribute("content");
+      var charset = metaItem.getAttribute("charset");
+      var property = metaItem.getAttribute("property");
+      var name = metaItem.getAttribute("name");
+      var content = metaItem.getAttribute("content");
+      if (charset)
+        meta['charset'] = charset;
+      else if (property)
+        meta[property] = content;
+      else if (name)
+        meta[name] = content;
     }
     return {body, meta};
   }
