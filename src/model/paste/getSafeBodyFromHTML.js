@@ -25,7 +25,6 @@ var isOldIE = UserAgent.isBrowser('IE <= 9');
 
 function getSafeBodyFromHTML(html: string): ?Element {
   var doc;
-  var root = null;
   // Provides a safe context
   if (
     !isOldIE &&
@@ -35,9 +34,21 @@ function getSafeBodyFromHTML(html: string): ?Element {
     doc = document.implementation.createHTMLDocument('foo');
     invariant(doc.documentElement, 'Missing doc.documentElement');
     doc.documentElement.innerHTML = html;
-    root = doc.getElementsByTagName('body')[0];
+    var body = doc.getElementsByTagName('body')[0];
+    var rawMeta = doc.getElementsByTagName('meta');
+    var meta = {};
+    for (var i = 0 ; i < rawMeta.length ; i++) {
+      var metaItem = rawMeta[i];
+      if (metaItem.getAttribute("charset"))
+        meta.charset = metaItem.getAttribute("charset");
+      else if (metaItem.getAttribute("property"))
+        meta[metaItem.getAttribute("property")] = metaItem.getAttribute("property");
+      else if (metaItem.getAttribute("name"))
+        meta[metaItem.getAttribute("name")] = metaItem.getAttribute("content");
+    }
+    return {body, meta};
   }
-  return root;
+  return null;
 }
 
 module.exports = getSafeBodyFromHTML;

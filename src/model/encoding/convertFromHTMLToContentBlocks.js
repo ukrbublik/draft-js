@@ -55,6 +55,7 @@ const {List, OrderedSet} = Immutable;
 
 const NBSP = '&nbsp;';
 const SPACE = ' ';
+const NBSP_CHAR = String.fromCharCode(160);
 
 // Arbitrary max indent
 const MAX_DEPTH = 4;
@@ -88,9 +89,10 @@ const anchorAttr = ['className', 'href', 'rel', 'target', 'title'];
 
 const imgAttr = ['alt', 'className', 'height', 'src', 'width'];
 
+let htmlInfo;
 let lastBlock;
 let lastBlockStack;
-let parseStack = [];
+let parseStack;
 
 const EMPTY_CHUNK = {
   text: '',
@@ -426,8 +428,20 @@ const genFragment = (
       ) {
         return {chunk: EMPTY_CHUNK, entityMap: entityMap};
       }
+
+      // special case for LibreOffice to prevent extra newlines
+      if (htmlInfo.source == 'LibreOffice') {
+        return {chunk: EMPTY_CHUNK, entityMap: entityMap};
+      }
+
+      // special case for MSWord to prevent extra ending spaces
+      if (text === NBSP_CHAR && node.parentNode && node.parentNode.className.split(' ').indexOf('EOP') != -1) {
+        return {chunk: EMPTY_CHUNK, entityMap: entityMap};
+      }
+
       return {chunk: getWhitespaceChunk(inEntity), entityMap};
     }
+
     if (inBlock !== 'pre') {
       // Can't use empty string because MSWord
       text = text.replace(REGEX_LF, SPACE);
@@ -604,9 +618,11 @@ const genFragment = (
     chunk = joinChunks(chunk, newChunk, experimentalTreeDataSupport);
     parseStack.pop();
     const sibling: ?Node = child.nextSibling;
+    const siblingNodeName = sibling ? sibling.nodeName.toLowerCase() : null;
+    const isSiblingBlock = sibling && (blockTags.indexOf(siblingNodeName) !== -1 || siblingNodeName === 'div');
 
     // Put in a newline to break up blocks inside blocks
-    if (!parentKey && sibling && isChildBlock && inBlock) {
+    if (!parentKey && sibling && isSiblingBlock && isChildBlock && inBlock) {
       chunk = joinChunks(chunk, getSoftNewlineChunk());
     }
     if (sibling) {
@@ -645,10 +661,14 @@ const getChunkForHTML = (
 
   const supportedBlockTags = getBlockMapSupportedTags(blockRenderMap);
 
-  const safeBody = DOMBuilder(html);
-  if (!safeBody) {
+  const safeHtml = DOMBuilder(html);
+  if (!safeHtml) {
     return null;
   }
+  const {body: safeBody, meta: safeMeta} = safeHtml;
+  htmlInfo = {meta: safeMeta};
+  if (safeMeta.generator && /LibreOffice/.test(safeMeta.generator))
+    htmlInfo.source = 'LibreOffice';
   lastBlock = null;
   lastBlockStack = null;
 
@@ -678,7 +698,6 @@ const getChunkForHTML = (
     blockRenderMap,
     _postProcessInlineTag,
   );
-  parseStack = [];
 
   let chunk = fragment.chunk;
   const newEntityMap = fragment.entityMap;
