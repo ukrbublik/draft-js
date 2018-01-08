@@ -525,7 +525,7 @@ const genFragment = (
   const inListBlock = lastList && inBlock === 'li' && nodeName === 'li';
   const inBlockOrHasNestedBlocks =
     (!inBlock || experimentalTreeDataSupport) &&
-    (blockTags.indexOf(nodeName) !== -1 || isUnstyledBlock);
+    isBlock;
 
   // Block Tags
   if (inListBlock || inBlockOrHasNestedBlocks) {
@@ -606,7 +606,7 @@ const genFragment = (
     const sibling: ?Node = child.nextSibling;
 
     // Put in a newline to break up blocks inside blocks
-    if (!parentKey && sibling && blockTags.indexOf(nodeName) >= 0 && inBlock) {
+    if (!parentKey && sibling && isBlock && inBlock) {
       chunk = joinChunks(chunk, getSoftNewlineChunk());
     }
     if (sibling) {
