@@ -89,6 +89,8 @@ const anchorAttr = ['className', 'href', 'rel', 'target', 'title'];
 const imgAttr = ['alt', 'className', 'height', 'src', 'width'];
 
 let lastBlock;
+let lastBlockStack;
+let parseStack = [];
 
 const EMPTY_CHUNK = {
   text: '',
@@ -244,12 +246,16 @@ const joinChunks = (
 
   // Kill whitespace after blocks
   if (lastInA === '\r') {
-    if (B.text === SPACE || B.text === '\n') {
+    if (B.text === SPACE || B.text === '\n' && !B.blocks.length) { //soft newline
       return A;
-    } else if (firstInB === SPACE || firstInB === '\n') {
+    } else if (firstInB === SPACE || firstInB === '\n' && !B.blocks.length) { //soft newline
       B.text = B.text.slice(1);
       B.inlines.shift();
       B.entities.shift();
+    } else if (B.text === '\n' && B.blocks.length) { //newline block
+      B.text = '\r';
+    } else if (firstInB === '\n' && B.blocks.length) { //newline block
+      B.text = '\r' + B.text.slice(1);
     }
   }
 
@@ -313,6 +319,26 @@ const getChunkedBlock = (props: Object = {}): Block => {
   };
 };
 
+const getBlockNewlineChunk = (
+  block: DraftBlockType,
+  depth: number,
+  parentKey: ?string = null,
+): Chunk => {
+  return {
+    text: '\n',
+    inlines: [OrderedSet()],
+    entities: new Array(1),
+    blocks: [
+      getChunkedBlock({
+        parent: parentKey,
+        key: generateRandomKey(),
+        type: block,
+        depth: Math.max(0, Math.min(MAX_DEPTH, depth)),
+      }),
+    ],
+  };
+};
+
 const getBlockDividerChunk = (
   block: DraftBlockType,
   depth: number,
@@ -333,6 +359,12 @@ const getBlockDividerChunk = (
   };
 };
 
+const parseStackStr = (): string => {
+  return parseStack.map((itm, ind) => {
+    return itm.nodeName + (ind > 0 ? "["+parseStack[ind-1].childInd+"]" : "")
+  }).join(" > ");
+};
+
 const genFragment = (
   entityMap: EntityMap,
   node: Node,
@@ -350,7 +382,12 @@ const genFragment = (
   inEntity?: ?string,
   parentKey?: ?string,
 ): {chunk: Chunk, entityMap: EntityMap} => {
+  let currParsingItem = parseStack[parseStack.length-1];
   const lastLastBlock = lastBlock;
+  const lastLastBlockStack = lastBlockStack;
+  const lastLastStackItem = lastLastBlockStack ? lastLastBlockStack[lastLastBlockStack.length-1] : null;
+  const lastParentStackItem = lastLastBlockStack ? lastLastBlockStack[lastLastBlockStack.length-2] : null;
+  const parentStackItem = parseStack.length > 1 ? parseStack[parseStack.length-2] : null;
   let nodeName = node.nodeName.toLowerCase();
   let newEntityMap = entityMap;
   let nextBlockType = 'unstyled';
@@ -360,6 +397,9 @@ const genFragment = (
   let chunk = {...EMPTY_CHUNK};
   let newChunk: ?Chunk = null;
   let blockKey;
+  let isUnstyledBlock = nodeName === 'div';
+  let isBlock = (blockTags.indexOf(nodeName) !== -1 || isUnstyledBlock);
+  Object.assign(currParsingItem, {inBlock, inBlockType, isBlock});
 
   // Base Case
   if (nodeName === '#text') {
@@ -396,6 +436,7 @@ const genFragment = (
 
     // save the last block so we can use it later
     lastBlock = nodeName;
+    lastBlockStack = parseStack.slice();
 
     return {
       chunk: {
@@ -410,16 +451,33 @@ const genFragment = (
 
   // save the last block so we can use it later
   lastBlock = nodeName;
+  lastBlockStack = parseStack.slice();
 
   // BR tags
   if (nodeName === 'br') {
-    if (lastLastBlock === 'br' && (!inBlock || inBlockType === 'unstyled')) {
+    //Google Docs adds one extra <BR>
+    if (node.className == 'Apple-interchange-newline')
+      return {chunk: EMPTY_CHUNK, entityMap: entityMap}
+
+    if (lastLastStackItem 
+      && lastLastBlockStack.length == parseStack.length 
+      && lastParentStackItem.node == parentStackItem.node
+      && (lastLastStackItem.nodeName == 'br' ? lastLastStackItem.isSoftNewline : !lastLastStackItem.isBlock)
+    ) {
+      //soft newline
+      currParsingItem.isSoftNewline = true;
       return {
-        chunk: getBlockDividerChunk('unstyled', depth, parentKey),
+        chunk: getSoftNewlineChunk(), 
+        entityMap
+      };
+    } else {
+      //new empty block
+      currParsingItem.isNewlineBlock = true;
+      return {
+        chunk: getBlockNewlineChunk('unstyled', depth, parentKey),
         entityMap,
       };
     }
-    return {chunk: getSoftNewlineChunk(), entityMap};
   }
 
   // IMG tags
@@ -467,7 +525,7 @@ const genFragment = (
   const inListBlock = lastList && inBlock === 'li' && nodeName === 'li';
   const inBlockOrHasNestedBlocks =
     (!inBlock || experimentalTreeDataSupport) &&
-    blockTags.indexOf(nodeName) !== -1;
+    (blockTags.indexOf(nodeName) !== -1 || isUnstyledBlock);
 
   // Block Tags
   if (inListBlock || inBlockOrHasNestedBlocks) {
@@ -483,6 +541,8 @@ const genFragment = (
       lastList === 'ul' ? 'unordered-list-item' : 'ordered-list-item';
   }
 
+  Object.assign(currParsingItem, {inBlock, blockKey, newBlock});
+
   // Recurse through children
   let child: ?Node = node.firstChild;
   if (child != null) {
@@ -492,6 +552,7 @@ const genFragment = (
   let entityId: ?string = null;
 
   while (child) {
+    currParsingItem.childInd++;
     if (
       child instanceof HTMLAnchorElement &&
       child.href &&
@@ -514,6 +575,12 @@ const genFragment = (
       entityId = undefined;
     }
 
+    parseStack.push({
+      node: child, 
+      nodeName: child.nodeName.toLowerCase(), 
+      childInd: -1,
+    });
+
     const {
       chunk: generatedChunk,
       entityMap: maybeUpdatedEntityMap,
@@ -535,6 +602,7 @@ const genFragment = (
     newEntityMap = maybeUpdatedEntityMap;
 
     chunk = joinChunks(chunk, newChunk, experimentalTreeDataSupport);
+    parseStack.pop();
     const sibling: ?Node = child.nextSibling;
 
     // Put in a newline to break up blocks inside blocks
@@ -582,6 +650,7 @@ const getChunkForHTML = (
     return null;
   }
   lastBlock = null;
+  lastBlockStack = null;
 
   // Sometimes we aren't dealing with content that contains nice semantic
   // tags. In this case, use divs to separate everything out into paragraphs
@@ -592,6 +661,12 @@ const getChunkForHTML = (
 
   // Start with -1 block depth to offset the fact that we are passing in a fake
   // UL block to start with.
+  parseStack = [];
+  parseStack.push({
+    node: safeBody, 
+    nodeName: 'body', 
+    childInd: -1
+  });
   const fragment = genFragment(
     entityMap,
     safeBody,
@@ -603,6 +678,7 @@ const getChunkForHTML = (
     blockRenderMap,
     _postProcessInlineTag,
   );
+  parseStack = [];
 
   let chunk = fragment.chunk;
   const newEntityMap = fragment.entityMap;
