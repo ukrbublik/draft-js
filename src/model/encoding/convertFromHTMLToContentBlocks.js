@@ -66,6 +66,8 @@ const REGEX_LF = new RegExp('\n', 'g');
 const REGEX_NBSP = new RegExp(NBSP, 'g');
 const REGEX_CARRIAGE = new RegExp('&#13;?', 'g');
 const REGEX_ZWS = new RegExp('&#8203;?', 'g');
+const REGEX_TRIM_PRESERVE_SPACES = /^[\f\n\r\t\v\uFEFF\xA0]+|[\f\n\r\t\v\uFEFF\xA0]+$/g;
+const REGEX_TRIM_CR_LF = /^[\n\r]+|[\n\r]+$/g;
 
 // https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight
 const boldValues = ['bold', 'bolder', '500', '600', '700', '800', '900'];
@@ -406,7 +408,7 @@ const genFragment = (
   if (nodeName === '#text') {
     let text = node.textContent;
     //trim whitespace chars except ' '
-    let nodeTextContent = text.replace(/^[\f\n\r\t\v\uFEFF\xA0]+|[\f\n\r\t\v\uFEFF\xA0]+$/g, '');
+    let nodeTextContent = text.replace(REGEX_TRIM_PRESERVE_SPACES, '');
 
     // We should not create blocks for leading spaces that are
     // existing around ol/ul and their children list items
@@ -414,6 +416,12 @@ const genFragment = (
       const parentNodeName = node.parentElement.nodeName.toLowerCase();
       if (parentNodeName === 'ol' || parentNodeName === 'ul') {
         return {chunk: {...EMPTY_CHUNK}, entityMap};
+      }
+    }
+
+    if (inBlock !== 'pre') {
+      if (htmlInfo.source == 'LibreOffice') {
+        text = text.replace(REGEX_TRIM_CR_LF, '');
       }
     }
 
@@ -536,7 +544,7 @@ const genFragment = (
   }
 
   const blockType = getBlockTypeForTag(nodeName, lastList, blockRenderMap);
-  const inListBlock = lastList && inBlock === 'li' && nodeName === 'li';
+  const inListBlock = lastList && inBlock === 'li' && nodeName === 'li'; // <li> inside <li> ?
   const inBlockOrHasNestedBlocks =
     (!inBlock || experimentalTreeDataSupport) &&
     isBlock;
@@ -558,16 +566,17 @@ const genFragment = (
   Object.assign(currParsingItem, {inBlock, blockKey, newBlock});
 
   // Recurse through children
+  let childNodeName;
   let child: ?Node = node.firstChild;
   if (child != null) {
-    nodeName = child.nodeName.toLowerCase();
+    childNodeName = child.nodeName.toLowerCase();
   }
 
   let entityId: ?string = null;
 
   while (child) {
     currParsingItem.childInd++;
-    let isChildBlock = (blockTags.indexOf(nodeName) !== -1 || nodeName === 'div');
+    let isChildBlock = (blockTags.indexOf(childNodeName) !== -1 || childNodeName === 'div');
     if (
       child instanceof HTMLAnchorElement &&
       child.href &&
@@ -592,7 +601,7 @@ const genFragment = (
 
     parseStack.push({
       node: child, 
-      nodeName: child.nodeName.toLowerCase(), 
+      nodeName: childNodeName, 
       childInd: -1,
     });
 
@@ -626,10 +635,19 @@ const genFragment = (
     if (!parentKey && sibling && isSiblingBlock && isChildBlock && inBlock) {
       chunk = joinChunks(chunk, getSoftNewlineChunk());
     }
+
     if (sibling) {
-      nodeName = sibling.nodeName.toLowerCase();
+      childNodeName = sibling.nodeName.toLowerCase();
     }
     child = sibling;
+  }
+
+  // Fix empty blocks
+  if (isBlock && chunk.text === '\r') {
+    chunk = joinChunks(
+      chunk,
+      getBlockNewlineChunk('unstyled', depth, experimentalTreeDataSupport ? blockKey : null),
+    );
   }
 
   if (newBlock) {
