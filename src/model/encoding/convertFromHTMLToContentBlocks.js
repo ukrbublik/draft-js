@@ -416,7 +416,7 @@ const genFragment = (
   // Base Case
   if (nodeName === '#text') {
     let text = node.textContent;
-    //trim whitespace chars except ' '
+    // trim whitespace chars except ' '
     let nodeTextContent = text.replace(REGEX_TRIM_PRESERVE_SPACES, '');
 
     // We should not create blocks for leading spaces that are
