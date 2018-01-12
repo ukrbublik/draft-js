@@ -29,6 +29,7 @@ const DraftFeatureFlags = require('DraftFeatureFlags');
 const Immutable = require('immutable');
 const {Set} = require('immutable');
 const URI = require('URI');
+const clone = (o) => JSON.parse(JSON.stringify(o));
 
 const generateRandomKey = require('generateRandomKey');
 const getSafeBodyFromHTML = require('getSafeBodyFromHTML');
@@ -257,6 +258,17 @@ const joinChunks = (
     A.blocks.pop();
   }
 
+  /*console.log('??', 
+    'A (bl='+A.blocks.length+', len='+A.text.length
+      +(A.text.indexOf('\r') != -1 ? ", \R="+(A.text.match(/\r/g) || []).length :"")
+      +(A.text.indexOf('\n') != -1 ? ", \N="+(A.text.match(/\n/g) || []).length :"")
+      +') = ', {text:A.text}, 
+    'B (bl='+B.blocks.length+', len='+B.text.length
+      +(B.text.indexOf('\r') != -1 ? ", \R="+(B.text.match(/\r/g) || []).length :"")
+      +(B.text.indexOf('\n') != -1 ? ", \N="+(B.text.match(/\n/g) || []).length :"")
+      +') = ', {text:B.text}, 
+    );*/
+
   // Kill newlines after blocks
   if (lastInA === '\r') {
     if (B.text === '\n' && !B.blocks.length) { //soft newline
@@ -395,6 +407,7 @@ const genFragment = (
   inEntity?: ?string,
   parentKey?: ?string,
 ): {chunk: Chunk, entityMap: EntityMap} => {
+  console.log(' '.repeat(parseStack.length)+'>', parseStackStr());
   let currParsingItem: StackItem = parseStack[parseStack.length-1];
   const lastLastBlock = lastBlock;
   const lastLastBlockStack: Array<StackItem> = lastBlockStack;
@@ -433,6 +446,7 @@ const genFragment = (
         text = text.replace(REGEX_TRIM_CR_LF, '');
       }
     }
+console.log('222222',{text, tri: nodeTextContent});
 
     if (nodeTextContent === '' && inBlock !== 'pre') {
       // whitespace after body or html comment
@@ -633,7 +647,7 @@ const genFragment = (
 
     newChunk = generatedChunk;
     newEntityMap = maybeUpdatedEntityMap;
-
+console.log(' '.repeat(parseStack.length)+'>', {text: newChunk.text}, clone(parseStack));
     chunk = joinChunks(chunk, newChunk, experimentalTreeDataSupport);
     parseStack.pop();
     const sibling: ?Node = child.nextSibling;
@@ -642,6 +656,7 @@ const genFragment = (
 
     // Put in a newline to break up blocks inside blocks
     if (!parentKey && sibling && isSiblingBlock && isChildBlock && inBlock) {
+      console.log(' '+' '.repeat(parseStack.length)+'**', 'soft newline',newChunk.text.length,sibling,inBlock,childNodeName);
       chunk = joinChunks(chunk, getSoftNewlineChunk());
     }
 
@@ -691,9 +706,11 @@ const getChunkForHTML = (
     return null;
   }
   const {body: safeBody, meta: safeMeta} = safeHtml;
+console.log('***html***', safeBody, safeMeta);
   htmlInfo = {};
   if (safeMeta.generator && /LibreOffice/.test(safeMeta.generator))
     htmlInfo.source = 'LibreOffice';
+
   lastBlock = null;
   lastBlockStack = [];
 
@@ -891,6 +908,7 @@ const convertFromHTMLtoContentBlocks = (
     DraftEntity,
     _postProcessInlineTag,
   );
+console.log('***chunkData***', clone(chunkData));
 
   if (chunkData == null) {
     return null;
@@ -898,6 +916,7 @@ const convertFromHTMLtoContentBlocks = (
 
   const {chunk, entityMap} = chunkData;
   const contentBlocks = convertChunkToContentBlocks(chunk);
+console.log('***contentBlocks***', contentBlocks);
 
   return {
     contentBlocks,
