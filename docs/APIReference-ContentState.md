@@ -150,6 +150,11 @@ objects.
       <pre>getUnionInlineStyleForSelection(selection: SelectionState): DraftInlineStyle</pre>
     </a>
   </li>
+  <li>
+    <a href="#getselectedtext">
+      <pre>getSelectedText (selection: SelectionState, blocksJoinGlue: ?string): string</pre>
+    </a>
+  </li>
 </ul>
 
 *Properties*
@@ -412,6 +417,13 @@ getUnionInlineStyleForSelection(selection: SelectionState): DraftInlineStyle
 ```
 Returns an `OrderedSet<string>` that represents all inline styles found in 
 contents in the selection (union).
+
+
+### getselectedtext 
+``` 
+getSelectedText (selection: SelectionState, blocksJoinGlue: ?string): string 
+``` 
+Returns text of selection. 
 
 
 ## Properties

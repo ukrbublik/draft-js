@@ -112,7 +112,7 @@ function editOnBeforeInput(
   // reduces re-renders and preserves spellcheck highlighting. If the selection
   // is not collapsed, we will re-render.
   var selection = editorState.getSelection();
-  var selectionStart = selection.getStartOffset();
+  //var selectionStart = selection.getStartOffset();
   var selectionEnd = selection.getEndOffset();
   var anchorKey = selection.getAnchorKey();
 
@@ -124,8 +124,7 @@ function editOnBeforeInput(
     // the `ContentState` with the new text.
     var currentlySelectedChars = editorState
       .getCurrentContent()
-      .getPlainText()
-      .slice(selectionStart, selectionEnd);
+      .getSelectedText(selection);
     if (chars === currentlySelectedChars) {
       editor.update(
         EditorState.forceSelection(
