@@ -1,7 +1,7 @@
 {
   "name": "draft-js-mod",
   "description": "A React framework for building text editors.",
-  "version": "0.10.100",
+  "version": "0.10.101",
   "keywords": [
     "draftjs",
     "editor",
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "babel-core": "^6.8.0",
-    "babel-eslint": "^7.2.3",
+    "babel-eslint": "^8.1.1",
     "babel-preset-fbjs": "^2.1.0",
     "del": "^2.2.0",
     "envify": "^3.4.0",
