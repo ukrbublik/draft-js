@@ -119,9 +119,9 @@ function editOnBeforeInput(
   if (!selection.isCollapsed()) {
     e.preventDefault();
 
-    // If the character that the user is trying to replace with
-    // is the same as the current selection text the just update the
-    // `SelectionState`.  Else, update the ContentState with the new text
+    // If the currently selected text matches what the user is trying to
+    // replace it with, let's just update the `SelectionState`. If not, update
+    // the `ContentState` with the new text.
     var currentlySelectedChars = editorState
       .getCurrentContent()
       .getPlainText()
@@ -186,6 +186,17 @@ function editOnBeforeInput(
         parentNode.nodeName === 'SPAN' &&
         parentNode.firstChild.nodeType === Node.TEXT_NODE &&
         parentNode.firstChild.nodeValue.indexOf('\t') !== -1;
+    }
+    // If selected block was empty, DraftEditorTextNode rendered it as <BR>.
+    // But now we typed some chars to it, so <BR> should be removed.
+    // We must let React render this properly.
+    if (
+      nativeSelection.anchorNode &&
+      nativeSelection.anchorNode.nodeName === 'SPAN' &&
+      nativeSelection.anchorNode.firstChild.nodeName == 'BR' &&
+      chars
+    ) {
+      mustPreventNative = true;
     }
   }
   if (!mustPreventNative) {
