@@ -1,7 +1,7 @@
 {
   "name": "draft-js-mod",
   "description": "A React framework for building text editors.",
-  "version": "0.10.101",
+  "version": "0.10.102",
   "keywords": [
     "draftjs",
     "editor",
