@@ -229,7 +229,8 @@ var DraftModifier = {
   splitBlock: function(
     contentState: ContentState,
     selectionState: SelectionState,
-    modifyStartBlock: ?boolean,
+    modifyStartBlock?: boolean,
+    blockBelowDataFn?: (data: Map<any, any>) => Map<any, any>,
   ): ContentState {
     var withoutEntities = removeEntitiesAtEdges(contentState, selectionState);
     var withoutText = removeRangeFromContentState(
@@ -241,6 +242,7 @@ var DraftModifier = {
     return splitBlockInContentState(
       withoutText,
       withoutText.getSelectionAfter(),
+      blockBelowDataFn,
     );
   },
 

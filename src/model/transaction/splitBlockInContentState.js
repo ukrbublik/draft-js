@@ -92,6 +92,7 @@ const updateBlockMapLinks = (
 const splitBlockInContentState = (
   contentState: ContentState,
   selectionState: SelectionState,
+  blockBelowDataFn?: (data: Map<any, any>) => Map<any, any>,
 ): ContentState => {
   invariant(selectionState.isCollapsed(), 'Selection range must be collapsed.');
 
@@ -125,11 +126,15 @@ const splitBlockInContentState = (
     text: text.slice(0, offset),
     characterList: chars.slice(0, offset),
   });
+
+  const blockBelowData = blockBelowDataFn
+    ? blockBelowDataFn(blockAbove.getData())
+    : Map();
   const blockBelow = blockAbove.merge({
     key: keyBelow,
     text: text.slice(offset),
     characterList: chars.slice(offset),
-    data: Map(),
+    data: blockBelowData,
   });
 
   const blocksBefore = blockMap.toSeq().takeUntil(v => v === blockToSplit);

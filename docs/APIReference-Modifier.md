@@ -170,7 +170,9 @@ for proper entity deletion behavior.
 ```
 splitBlock(
   contentState: ContentState,
-  selectionState: SelectionState
+  selectionState: SelectionState,
+  modifyStartBlock?: boolean,
+  blockBelowDataFn?: (data: Map<any, any>) => Map<any, any>,
 ): ContentState
 ```
 Split the selected block into two blocks. This should only be used if the
