@@ -298,8 +298,8 @@ const removeRangeFromContentState = (
   }
 
   let modifiedKey = modifyStartBlock ? startKey : endKey;
-
-  const modifiedStart = startBlock.merge({
+  let modifiedBlock = modifyStartBlock ? startBlock : endBlock;
+  const modifiedStart = modifiedBlock.merge({
     text:
       startBlock.getText().slice(0, startOffset) +
       endBlock.getText().slice(endOffset),
