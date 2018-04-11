@@ -41,11 +41,13 @@ const defaultRecord: {
   blockMap: ?BlockMap,
   selectionBefore: ?SelectionState,
   selectionAfter: ?SelectionState,
+  __metadata: ?any,
 } = {
   entityMap: null,
   blockMap: null,
   selectionBefore: null,
   selectionAfter: null,
+  __metadata: null,
 };
 
 const ContentBlockNodeRecord = experimentalTreeDataSupport
